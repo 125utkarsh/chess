@@ -229,7 +229,7 @@ class _GameBoardState extends State<GameBoard> {
             isWhite: isWhite(index),
             piece: board[row][col],
             isSelected: isSelected,
-            onTap: () => pieceSelected(row ,col),
+            onTap: () => pieceSelected(row ,col), isValidMove: true,
           );
         }
       ),
