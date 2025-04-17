@@ -1,7 +1,6 @@
 import 'package:chess/helper/helper_method.dart';
 import 'package:chess/component/piece.dart';
 import 'package:chess/component/square.dart';
-//import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class GameBoard extends StatefulWidget{
@@ -12,12 +11,16 @@ class GameBoard extends StatefulWidget{
 }
 
 class _GameBoardState extends State<GameBoard> {
-
   late List<List<ChessPiece?>> board;
+  ChessPiece? selectedPiece;
+
+  int selectedRow = -1;
+  int selectedCol = -1;
+
+  List<List<int>> validMoves = [];
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     initializeBoard();
   }
@@ -112,7 +115,7 @@ class _GameBoardState extends State<GameBoard> {
         isWhite: false,
         imagePath: 'images/king2.png'
     );
-    newBoard[7][4] = ChessPiece(
+    newBoard[7][3] = ChessPiece(
         type: ChessPieceType.king,
         isWhite: true,
         imagePath: 'images/king2.png'
@@ -124,7 +127,7 @@ class _GameBoardState extends State<GameBoard> {
         isWhite: false,
         imagePath: 'images/queen2.png'
     );
-    newBoard[7][3] = ChessPiece(
+    newBoard[7][4] = ChessPiece(
         type: ChessPieceType.queen,
         isWhite: true,
         imagePath: 'images/queen2.png'
@@ -133,6 +136,73 @@ class _GameBoardState extends State<GameBoard> {
 
 
     board = newBoard;
+  }
+
+  void pieceSelected(int row , int col) {
+    setState(() {
+      if(board[row][col] != null){
+        selectedPiece = board[row][col];
+        selectedRow = row;
+        selectedCol = col;
+      }
+
+      validMoves = calculateRawValidMoves(selectedRow, selectedCol, selectedPiece);
+
+    });
+  }
+
+  List<List<int>> calculateRawValidMoves(int row, int col, ChessPiece? piece){
+    List<List<int>> candidateMoves = [];
+
+    int direction = piece!.isWhite ? -1 : 1;
+
+    switch (piece.type) {
+      case ChessPieceType.pawn:
+
+        //pawns can move forward if the square is not occupied
+        if(isInBoard(row + direction, col) &&
+            board[row + direction][col] == null){
+          candidateMoves.add([row + direction, col]);
+        }
+
+        //pawns can move 2 square forward if they are at their intial positions
+        if((row == 1 && !piece.isWhite) || (row == 6 && piece.isWhite)) {
+          if (isInBoard(row + 2, col) &&
+              board[row + 2 * direction][col] == null &&
+              board[row + direction][col] == null) {
+            candidateMoves.add([row + 2 * direction, col]);
+          }
+        }
+        
+        //pawns can kill diagonally
+        if(isInBoard(row + direction, col -1) &&
+            board[row + direction][col -1] != null &&
+            board[row + direction][col - 1]!.isWhite) {
+          candidateMoves.add([row + direction, col -1]);
+        }
+        if(isInBoard(row + direction, col +1) &&
+            board[row + direction][col +1] != null &&
+            board[row + direction][col + 1]!.isWhite) {
+          candidateMoves.add([row + direction, col +1]);
+        }
+
+
+        break;
+      case ChessPieceType.rook:
+        break;
+      case ChessPieceType.knight:
+        break;
+      case ChessPieceType.queen:
+        break;
+      case ChessPieceType.king:
+        break;
+      default:
+
+
+
+    }
+    return candidateMoves;
+
   }
 
   // ChessPiece myPawn = ChessPiece(
@@ -153,9 +223,13 @@ class _GameBoardState extends State<GameBoard> {
           int row = index ~/ 8;
           int col = index % 8;
 
+          bool isSelected = selectedRow == row && selectedCol == col;
+
           return Square(
             isWhite: isWhite(index),
             piece: board[row][col],
+            isSelected: isSelected,
+            onTap: () => pieceSelected(row ,col),
           );
         }
       ),
